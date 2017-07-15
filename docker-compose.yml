@@ -1,0 +1,26 @@
+version: '3'
+services:
+  db:
+    image: postgres
+  dev:
+    build: .
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    volumes:
+      - .:/hello-world
+    ports:
+      - 3000
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      VIRTUAL_HOST: dev.ror.teracy.dev, ~^dev\.ror\..*\.xip\.io
+      VIRTUAL_PORT: 3000
+      HTTPS_METHOD: noredirect # support both http and https
+    env_file:
+      - .env-common
+      - .env-dev
+    restart: unless-stopped
+    # to get this work with https://github.com/jwilder/nginx-proxy
+    # related: https://github.com/jwilder/nginx-proxy/issues/305
+    network_mode: bridge

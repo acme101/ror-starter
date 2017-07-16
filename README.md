@@ -1,24 +1,11 @@
-# README
+# USAGE
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+* Clone the project into `/workspace` folder of `teracyhq/dev` at https://github.com/teracyhq/dev
 
-Things you may want to cover:
+* Run `vargrant up`
 
-* Ruby version
+* Login into the VM using `vargrant ssh`
 
-* System dependencies
+* Run `docker-compose up`
 
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+* Open https://dev.ror.teracy.dev on your host browser to see the app running

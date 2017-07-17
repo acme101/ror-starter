@@ -13,8 +13,9 @@ stages:
   - deploy
 
 variables:
-  HEROKU_USER_NAME: _
+  HEROKU_USER_NAME: duc4nh.nguyen@gmail.com
   HEROKU_REGISTRY: registry.heroku.com
+  HEROKU_API_KEY_PROD: b180e9c9-a9ba-4d44-963e-005b5c7e611d
 
 build-verify:
   image: docker:latest

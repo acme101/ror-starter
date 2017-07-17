@@ -12,6 +12,7 @@ services:
         CI_BUILD_TIME: ${CI_BUILD_TIME}
         CI_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}
         RAILS_ENV: production
+    image: ${DOCKER_IMAGE_PROD:-acme101/ror-hello-world:develop}
     command: bundle exec rails s -p 3000 -b '0.0.0.0'
     volumes:
       - .:/hello-world

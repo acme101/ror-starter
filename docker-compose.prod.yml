@@ -2,8 +2,16 @@ version: '3'
 services:
   db:
     image: postgres
-  dev:
-    build: .
+  prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CI_BUILD_ID: ${CI_BUILD_ID}
+        CI_BUILD_REF: ${CI_BUILD_REF}
+        CI_BUILD_TIME: ${CI_BUILD_TIME}
+        CI_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}
+        RAILS_ENV: production
     command: bundle exec rails s -p 3000 -b '0.0.0.0'
     volumes:
       - .:/hello-world
@@ -12,10 +20,8 @@ services:
     depends_on:
       - db
     environment:
-      RAILS_ENV: development
       PORT: 3000
-      VIRTUAL_HOST: dev.ror.teracy.dev, ~^dev\.ror\..*\.xip\.io
-      VIRTUAL_PORT: 3000
+      VIRTUAL_HOST: ror.teracy.dev, ~^ror\..*\.xip\.io
       HTTPS_METHOD: noredirect # support both http and https
     env_file:
       - .env-common

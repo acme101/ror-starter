@@ -1,0 +1,131 @@
+image: docker:latest
+#
+services:
+ - docker:dind
+
+variables:
+#  # see https://gitlab.com/gitlab-org/gitlab-ce/issues/17861#note_12991518
+ DOCKER_DRIVER: overlay
+
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  HEROKU_USER_NAME: _
+  HEROKU_REGISTRY: registry.heroku.com
+
+build-verify:
+  image: docker:latest
+  stage: build
+  before_script:
+    - apk add --no-cache py-pip
+    - pip install docker-compose
+    - docker-compose --version
+    # convert / to -, remove # character from docker tag name to make it a valid name
+    - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
+    - export DOCKER_IMAGE_PROD=$CI_REGISTRY_IMAGE:$IMG_TAG
+    - docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+    - export CI_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  script:
+    # build
+    - docker-compose -f docker-compose.prod.yml build --pull prod
+    - docker push $DOCKER_IMAGE_PROD
+
+# deploy-gcp-staging:
+#   image: teracy/google-cloud-sdk
+#   stage: deploy
+#   before_script:
+#     # convert / to -, remove # character from docker tag name to make it a valid name
+#     - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
+#     - export DOCKER_IMAGE_PROD=$CI_REGISTRY_IMAGE:$IMG_TAG
+#     - export GCP_ACCOUNT=$GCP_ACCOUNT_STAGING
+#     - export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING
+#     - export GCP_ZONE=$GCP_ZONE_STAGING
+#     - export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING
+#     - export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE}-nhw
+#     - export HELM_CHART=helm-charts/nodejs-hello-world
+#     - export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE
+#     - export HELM_IMAGE_TAG=$IMG_TAG
+#     - export HELM_IMAGE_PULL_POLICY=Always
+#     - export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+#     #- docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+#     - echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json
+#   script:
+#     - sh scripts/setup_gcp.sh
+#     - sh scripts/deploy_gcp.sh
+#   after_script:
+#     - rm /tmp/gcp_key_file.json
+#   environment: staging
+#   only:
+#     - develop
+#   allow_failure: true # for downstream failure
+#   when: on_success
+
+
+# deploy-gcp-prod:
+#   image: teracy/google-cloud-sdk
+#   stage: deploy
+#   before_script:
+#     # convert / to -, remove # character from docker tag name to make it a valid name
+#     - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
+#     - export DOCKER_IMAGE_PROD=$CI_REGISTRY_IMAGE:$IMG_TAG
+#     - export GCP_ACCOUNT=$GCP_ACCOUNT_PROD
+#     - export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD
+#     - export GCP_ZONE=$GCP_ZONE_PROD
+#     - export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD
+#     - export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE}-nhw
+#     - export HELM_CHART=helm-charts/nodejs-hello-world
+#     - export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE
+#     - export HELM_IMAGE_TAG=$IMG_TAG
+#     - export HELM_IMAGE_PULL_POLICY=Always
+#     - export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+#     #- docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+#     - echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json
+#   script:
+#     - sh scripts/setup_gcp.sh
+#     - sh scripts/deploy_gcp.sh
+#   after_script:
+#     - rm /tmp/gcp_key_file.json
+#   environment: prod
+#   only:
+#     - master
+#   allow_failure: true # for downstream failure
+#   when: on_success
+
+
+deploy-heroku-staging:
+  stage: deploy
+  before_script:
+    # convert / to -, remove # character from docker tag name to make it a valid name
+    - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
+    - export DOCKER_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
+    - export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_STAGING/web
+    - docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+  script:
+    - echo "login into Heroku Docker registry"
+    - docker login -u "$HEROKU_USER_NAME" -p "$HEROKU_API_KEY_STAGING" $HEROKU_REGISTRY
+    - sh scripts/deploy_heroku.sh
+  environment: staging
+  only:
+    - develop
+  allow_failure: true # for downstream failure
+  when: on_success
+
+deploy-heroku-prod:
+  stage: deploy
+  before_script:
+    # convert / to -, remove # character from docker tag name to make it a valid name
+    - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
+    - export DOCKER_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
+    - export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_PROD/web
+    - docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+  script:
+    - docker login -u "$HEROKU_USER_NAME" -p "$HEROKU_API_KEY_PROD" $HEROKU_REGISTRY
+    - sh scripts/deploy_heroku.sh
+  environment: prod
+  only:
+    - master
+  allow_failure: true # for downstream failure
+  when: on_success

@@ -17,4 +17,4 @@ ADD Gemfile /hello-world/Gemfile
 ADD Gemfile.lock /hello-world/Gemfile.lock
 RUN bundle install
 ADD . /hello-world
-CMD ["bundle exec rails s -p 3000 -b '0.0.0.0'"]
+CMD gunicorn --bind 0.0.0.0:$PORT wsgi

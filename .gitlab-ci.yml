@@ -15,8 +15,6 @@ stages:
 variables:
   HEROKU_USER_NAME: _
   HEROKU_REGISTRY: registry.heroku.com
-  HEROKU_API_KEY_PROD: b180e9c9-a9ba-4d44-963e-005b5c7e611d
-  HEROKU_APP_NAME_PROD: hello-world-ror
 
 build-verify:
   image: docker:latest

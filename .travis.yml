@@ -55,7 +55,7 @@ after_success:
     export GCP_ZONE=$GCP_ZONE_STAGING;
     export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING;
     export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE}-nhw;
-    export HELM_CHART=helm-charts/nodejs-hello-world;
+    export HELM_CHART=helm-charts/ror-hello-world;
     export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
     export HELM_IMAGE_TAG=$IMG_TAG;
     export HELM_IMAGE_PULL_POLICY=Always;
@@ -70,7 +70,7 @@ after_success:
     export GCP_ZONE=$GCP_ZONE_PROD;
     export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD;
     export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE}-nhw;
-    export HELM_CHART=helm-charts/nodejs-hello-world;
+    export HELM_CHART=helm-charts/ror-hello-world;
     export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
     export HELM_IMAGE_TAG=$IMG_TAG;
     export HELM_IMAGE_PULL_POLICY=Always;

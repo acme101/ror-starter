@@ -23,6 +23,7 @@ services:
       PORT: 3000
       VIRTUAL_HOST: ror.teracy.dev, ~^ror\..*\.xip\.io
       HTTPS_METHOD: noredirect # support both http and https
+      SECRET_KEY_BASE: 9f9c9f404f455d3973ef38d7de7a21d2355244cc528b14b4cf4bec6db3949fe0362ad5fa5fe882f73fa5c62b0d323264e715e50fa43fdc470831f98aab996833
     env_file:
       - .env-common
       - .env-dev

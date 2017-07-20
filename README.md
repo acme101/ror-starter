@@ -14,4 +14,4 @@
 
 * Auto deployment to Heroku: https://hello-world-ror.herokuapp.com/
 
-* CI/CI with travis-ci: https://travis-ci.org/duc4nh/hello-world-ror/builds (Under construction...)
+* CI/CI with travis-ci: https://travis-ci.org/duc4nh/ror-starter/builds

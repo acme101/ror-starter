@@ -23,5 +23,4 @@ gcloud container clusters get-credentials $GCP_CLUSTER_NAME
 #kubectl delete secret registry.gitlab.com
 #kubectl create secret docker-registry registry.gitlab.com --docker-server=$CI_REGISTRY --docker-username=$DOCKER_USERNAME --docker-password=$DOCKER_PASSWORD --docker-email=$DOCKER_EMAIL
 kubectl version
-
 #kubectl apply -f k8s/deployment.yaml

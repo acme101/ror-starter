@@ -1,4 +1,4 @@
-services:
+servicCs:
   - docker
 env:
   global:
@@ -51,7 +51,7 @@ before_script:
 - export APP_PROD_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
 - echo $APP_PROD_IMAGE
 script:
-- docker-compose build base;
+- docker-compose build --pull base;
 - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
 after_success:
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
@@ -62,7 +62,8 @@ after_success:
     export GCP_ZONE=$GCP_ZONE_STAGING;
     export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING;
     export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_APP;
-    export HELM_CHART=helm-charts/ror-hello-world;
+    echo $HELM_RELEASE_NAME;
+    export HELM_CHART=helm-charts/$CI_PROJECT_APP;
     export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
     export HELM_IMAGE_TAG=$IMG_TAG;
     export HELM_IMAGE_PULL_POLICY=Always;
@@ -77,7 +78,8 @@ after_success:
     export GCP_ZONE=$GCP_ZONE_PROD;
     export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD;
     export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_APP;
-    export HELM_CHART=helm-charts/ror-hello-world;
+    echo $HELM_RELEASE_NAME;
+    export HELM_CHART=helm-charts/$CI_PROJECT_APP;
     export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
     export HELM_IMAGE_TAG=$IMG_TAG;
     export HELM_IMAGE_PULL_POLICY=Always;
@@ -87,10 +89,12 @@ after_success:
     export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_PROD/web;
     export HEROKU_API_KEY=$HEROKU_API_KEY_PROD;
   fi
-- if [[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]; then
+- if ([[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]) && [[ -f /tmp/gcp_key_file.json ]]; then
     sh scripts/setup_gcp.sh;
     sh scripts/deploy_gcp.sh;
+    rm -rf /tmp/gcp_key_file.json;
+  fi
+- if [[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]; then
     docker login -u "$HEROKU_USER_NAME" -p "$HEROKU_API_KEY" $HEROKU_REGISTRY;
     sh scripts/deploy_heroku.sh;
   fi
-- rm -rf /tmp/gcp_key_file.json

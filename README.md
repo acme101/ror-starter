@@ -12,6 +12,6 @@
 
 * CI/CD with gitlab-ci: https://gitlab.com/duc4nh.nguyen/hello-world-ror/pipelines
 
-* Auto deployment to Heroku: https://hello-world-ror.herokuapp.com/
+* CI/CD with travis-ci: https://travis-ci.org/duc4nh/ror-starter/builds
 
-* CI/CI with travis-ci: https://travis-ci.org/duc4nh/ror-starter/builds
+* Auto deployment to Heroku: https://hello-world-ror.herokuapp.com/

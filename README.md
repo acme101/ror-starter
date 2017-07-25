@@ -86,8 +86,32 @@ Don't forget to remove the containers after checking out for cleaning up:
 $ docker-compose -f docker-compose.yml -f docker-compose.review.yml down app-review -v
 ```
 
+## LAN Access
+
+Sometimes, you need to access the site from a mobile devices or from different browser clients.
+
+To do that, you need to know the VM ip address (accessible within LAN by default) from
+http://dev.teracy.org/docs/basic_usage.html#ip-address
+
+and use these urls for accessing:
+
+- dev mode: dev.ror.\<vm_ip>.xip.io
+
+- prod mode: ror.\<vm_ip>.xip.io
+
+- review mode: review.ror.\<vm_ip>.xip.io
+
+for example:
+
+dev.ror.192.168.1.5.xip.io or ror.192.168.1.5.xip.io
+
+
+## Remote Debugging
+
+//TODO(duc4nh): https://github.com/acme101/ror-starter/issues/2
+
+
 ## Learn more
 
 - https://github.com/teracyhq/dev
 - http://rubyonrails.org/
-=======

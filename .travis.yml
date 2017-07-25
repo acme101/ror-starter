@@ -22,8 +22,8 @@ before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-  - docker --version
-  - docker-compose --version
+  - docker version
+  - docker-compose version
   # install google-cloud-sdk
   # clean up existing gcloud pre-installed by travis-ci
   - sudo rm -rf /usr/bin/git-credential-gcloud.sh /usr/bin/bq /usr/bin/gcloud /usr/bin/gsutil
@@ -47,6 +47,7 @@ before_script:
 - export CI_REGISTRY_IMAGE=$DOCKER_USER/$DOCKER_REPO
 - export IMG_TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
 - export APP_PROD_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
+- echo $APP_PROD_IMAGE
 script:
 - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
 after_success:

@@ -1,6 +1,6 @@
 FROM ruby:2.4.1
 
-LABEL authors="duc4nh <duc4nh.nguyen@gmail.com"
+LABEL authors="duc4nh <duc4nh.nguyen@gmail.com>"
 
 RUN mkdir -p /opt/app
 

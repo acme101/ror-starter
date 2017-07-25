@@ -3,7 +3,7 @@ version: '3'
 services:
 
   app-dev:
-    image: ${APP_DEV_IMAGE:-ruby:2.4.1}
+    image: ${APP_DEV_IMAGE:-acme101/ror-starter:base-develop}
     working_dir: /opt/app
     command: sh run-dev.sh
     environment:
@@ -27,6 +27,14 @@ services:
     # related: https://github.com/jwilder/nginx-proxy/issues/305
     network_mode: bridge
 
+  # base image to be used for faster development, don't have to build lots of layers everytime
+  base:
+    build:
+      context: .
+      dockerfile: Dockerfile-base
+    image: ${BASE_IMAGE:-acme101/ror-starter:base-develop}
+
   db-dev:
     image: ${DB_DEV_IMAGE:-postgres:9.6.3-alpine}
+    restart: unless-stopped
     network_mode: bridge

@@ -27,12 +27,12 @@ services:
     # related: https://github.com/jwilder/nginx-proxy/issues/305
     network_mode: bridge
 
-  # base image to be used for faster development, don't have to build lots of layers everytime
-  base:
+  # app-dev base image to be used for faster development, don't have to build lots of layers everytime
+  app-dev-base:
     build:
       context: .
-      dockerfile: Dockerfile-base
-    image: ${BASE_IMAGE:-acme101/ror-starter:base-develop}
+      dockerfile: Dockerfile-app-dev-base
+    image: ${APP_DEV_BASE_IMAGE:-acme101/ror-starter:base-develop}
 
   db-dev:
     image: ${DB_DEV_IMAGE:-postgres:9.6.3-alpine}

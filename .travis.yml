@@ -46,16 +46,16 @@ before_script:
 - export DOCKER_REPO=${DOCKER_REPO:-$CI_PROJECT_APP}
 - export CI_REGISTRY_IMAGE=$DOCKER_USER/$DOCKER_REPO
 - export IMG_TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
-- export BASE_IMAGE=$CI_REGISTRY_IMAGE:base-$IMG_TAG
-- echo $BASE_IMAGE
+- export APP_DEV_BASE_IMAGE=$CI_REGISTRY_IMAGE:base-$IMG_TAG
+- echo $APP_DEV_BASE_IMAGE
 - export APP_PROD_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
 - echo $APP_PROD_IMAGE
 script:
-- docker-compose build --pull base;
+- docker-compose build --pull app-dev-base;
 - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
 after_success:
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
-- docker push $BASE_IMAGE
+- docker push $APP_DEV_BASE_IMAGE
 - docker push $APP_PROD_IMAGE
 - if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
     export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING;

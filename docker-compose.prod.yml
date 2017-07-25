@@ -2,10 +2,7 @@ version: '3'
 
 services:
 
-  db:
-    image: postgres
-
-  prod:
+  app-prod:
     build:
       context: .
       dockerfile: Dockerfile
@@ -15,16 +12,18 @@ services:
         CI_BUILD_TIME: ${CI_BUILD_TIME}
         CI_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}
         RAILS_ENV: production
-    image: ${DOCKER_IMAGE_PROD:-acme101/ror-hello-world:develop}
+    image: ${DOCKER_IMAGE_PROD:-acme101/ror-starter:develop}
     depends_on:
-      - db
+      - db-dev
+    links:
+      - db-dev:db
     environment:
       PORT: 3000
-      VIRTUAL_HOST: ror.teracy.dev, ~^ror\..*\.xip\.io
+      VIRTUAL_HOST: ${APP_PROD_VIRTUAL_HOST:-ror.acme.dev, ~^ror\..*\.xip\.io}
       HTTPS_METHOD: noredirect # support both http and https
     env_file:
       - .env-common
-      - .env-dev
+      - .env-prod
     ports:
       - 3000
     network_mode: bridge

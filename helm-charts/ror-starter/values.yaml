@@ -3,11 +3,11 @@
 # Declare variables to be passed into your templates.
 replicaCount: 1
 image:
-  repository: acme101/ror-hello-world
+  repository: acme101/ror-starter
   tag: develop
   pullPolicy: Always
 service:
-  name: ror-hello-world-app
+  name: ror-starter-app
   type: LoadBalancer
   externalPort: 80
   internalPort: 3000

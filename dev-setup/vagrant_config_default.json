@@ -1,0 +1,10 @@
+{
+  "plugins": [{
+    "_id": "2",
+    "options": {
+      "_ua_aliases": [
+        "dev.ror.acme.dev", "review.ror.acme.dev", "ror.acme.dev"
+      ]
+    }
+  }]
+}

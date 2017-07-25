@@ -1,4 +1,3 @@
-sudo: required
 services:
   - docker
 env:
@@ -41,27 +40,30 @@ before_install:
   - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
   - helm version --client
 before_script:
+- export CI_PROJECT_NAMESPACE=`echo $CI_PROJECT_NAME | cut -d"/" -f1`;
+- export CI_PROJECT_APP=`echo $CI_PROJECT_NAME | cut -d"/" -f2`;
+- export DOCKER_USER=${DOCKER_USER:-$CI_PROJECT_NAMESPACE}
+- export DOCKER_REPO=${DOCKER_REPO:-$CI_PROJECT_APP}
 - export CI_REGISTRY_IMAGE=$DOCKER_USER/$DOCKER_REPO
 - export IMG_TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
-- export DOCKER_IMAGE_PROD=$CI_REGISTRY_IMAGE:$IMG_TAG
-- export CI_PROJECT_NAMESPACE=`echo $CI_PROJECT_NAME | cut -d"/" -f1`;
+- export APP_PROD_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
 script:
-- docker-compose -f docker-compose.prod.yml build --pull prod;
+- docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
 after_success:
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
-- docker push $DOCKER_IMAGE_PROD
+- docker push $APP_PROD_IMAGE
 - if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
     export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING;
     export GCP_ZONE=$GCP_ZONE_STAGING;
     export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING;
-    export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE}-nhw;
+    export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_APP;
     export HELM_CHART=helm-charts/ror-hello-world;
     export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
     export HELM_IMAGE_TAG=$IMG_TAG;
     export HELM_IMAGE_PULL_POLICY=Always;
     export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
     echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json;
-    export DOCKER_IMAGE=$DOCKER_IMAGE_PROD;
+    export DOCKER_IMAGE=$APP_PROD_IMAGE;
     export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_STAGING/web;
     export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
   fi
@@ -69,14 +71,14 @@ after_success:
     export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD;
     export GCP_ZONE=$GCP_ZONE_PROD;
     export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD;
-    export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE}-nhw;
+    export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_APP;
     export HELM_CHART=helm-charts/ror-hello-world;
     export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
     export HELM_IMAGE_TAG=$IMG_TAG;
     export HELM_IMAGE_PULL_POLICY=Always;
     export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
     echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json;
-    export DOCKER_IMAGE=$DOCKER_IMAGE_PROD;
+    export DOCKER_IMAGE=$APP_PROD_IMAGE;
     export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_PROD/web;
     export HEROKU_API_KEY=$HEROKU_API_KEY_PROD;
   fi

@@ -39,6 +39,8 @@ before_install:
   # install helm
   - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
   - helm version --client
+  - wget -qO- https://cli-assets.heroku.com/install-ubuntu.sh | sh
+  - heroku --version
 before_script:
 - export CI_PROJECT_NAMESPACE=`echo $CI_PROJECT_NAME | cut -d"/" -f1`;
 - export CI_PROJECT_APP=`echo $CI_PROJECT_NAME | cut -d"/" -f2`;
@@ -70,8 +72,10 @@ after_success:
     export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
     echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json;
     export DOCKER_IMAGE=$APP_PROD_IMAGE;
-    export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_STAGING/web;
-    export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
+    export HEROKU_APP_NAME=${HEROKU_APP_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_APP};
+    echo $HEROKU_APP_NAME;
+    export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
+    export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING;
   fi
 - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
     export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD;
@@ -86,8 +90,10 @@ after_success:
     export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
     echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json;
     export DOCKER_IMAGE=$APP_PROD_IMAGE;
-    export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_PROD/web;
-    export HEROKU_API_KEY=$HEROKU_API_KEY_PROD;
+    export HEROKU_APP_NAME=${HEROKU_APP_NAME_PROD:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_APP};
+    echo $HEROKU_APP_NAME;
+    export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
+    export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD;
   fi
 - if ([[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]) && [[ -f /tmp/gcp_key_file.json ]]; then
     sh scripts/setup_gcp.sh;

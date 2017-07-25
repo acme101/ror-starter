@@ -20,33 +20,34 @@ build-verify:
   image: docker:latest
   stage: build
   before_script:
-    - apk add --no-cache py-pip
-    - pip install docker-compose
-    - docker-compose --version
+    - sh scripts/install_docker_compose.sh
     # convert / to -, remove # character from docker tag name to make it a valid name
     - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
-    - export DOCKER_IMAGE_PROD=$CI_REGISTRY_IMAGE:$IMG_TAG
+    - export APP_DEV_BASE_IMAGE=$CI_REGISTRY_IMAGE:base-$IMG_TAG
+    - export APP_PROD_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
     - docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
     - export CI_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   script:
     # build
-    - docker-compose -f docker-compose.prod.yml build --pull prod
-    - docker push $DOCKER_IMAGE_PROD
+    - docker-compose build --pull app-dev-base
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod
+    - docker push $APP_DEV_BASE_IMAGE
+    - docker push $APP_PROD_IMAGE
 
 deploy-gcp-staging:
   image: teracy/google-cloud-sdk
   stage: deploy
   before_script:
+    - export CI_PROJECT_NAMESPACE=`echo $CI_PROJECT_NAMESPACE | sed 's/[^a-zA-Z0-9-]//g'`;
+    - export CI_PROJECT_NAME=`echo $CI_PROJECT_NAME | sed 's/[^a-zA-Z0-9-]//g'`;
     # convert / to -, remove # character from docker tag name to make it a valid name
     - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
-    - export DOCKER_IMAGE_PROD=$CI_REGISTRY_IMAGE:$IMG_TAG
     - export GCP_ACCOUNT=$GCP_ACCOUNT_STAGING
     - export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING
     - export GCP_ZONE=$GCP_ZONE_STAGING
     - export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING
-    - export CI_PROJECT_NAMESPACE_NORMALIZED=`echo $CI_PROJECT_NAMESPACE | sed 's/[^a-zA-Z0-9]//g'`
-    - export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE_NORMALIZED}-nhw
-    - export HELM_CHART=helm-charts/ror-hello-world
+    - export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME
+    - export HELM_CHART=helm-charts/$CI_PROJECT_NAME
     - export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE
     - export HELM_IMAGE_TAG=$IMG_TAG
     - export HELM_IMAGE_PULL_POLICY=Always
@@ -69,16 +70,16 @@ deploy-gcp-prod:
   image: teracy/google-cloud-sdk
   stage: deploy
   before_script:
+    - export CI_PROJECT_NAMESPACE=`echo $CI_PROJECT_NAMESPACE | sed 's/[^a-zA-Z0-9-]//g'`;
+    - export CI_PROJECT_NAME=`echo $CI_PROJECT_NAME | sed 's/[^a-zA-Z0-9-]//g'`;
     # convert / to -, remove # character from docker tag name to make it a valid name
     - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
-    - export DOCKER_IMAGE_PROD=$CI_REGISTRY_IMAGE:$IMG_TAG
     - export GCP_ACCOUNT=$GCP_ACCOUNT_PROD
     - export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD
     - export GCP_ZONE=$GCP_ZONE_PROD
     - export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD
-    - export CI_PROJECT_NAMESPACE_NORMALIZED=`echo $CI_PROJECT_NAMESPACE | sed 's/[^a-zA-Z0-9]//g'`
-    - export HELM_RELEASE_NAME=$IMG_TAG-${HELM_PROJECT_NAMESPACE:-$CI_PROJECT_NAMESPACE_NORMALIZED}-nhw
-    - export HELM_CHART=helm-charts/ror-hello-world
+    - export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME
+    - export HELM_CHART=helm-charts/$CI_PROJECT_NAME
     - export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE
     - export HELM_IMAGE_TAG=$IMG_TAG
     - export HELM_IMAGE_PULL_POLICY=Always
@@ -98,16 +99,24 @@ deploy-gcp-prod:
 
 
 deploy-heroku-staging:
+  image: teracy/ubuntu:14.04-dind
   stage: deploy
   before_script:
+    - docker version
+    - docker-compose version
+    - wget -qO- https://cli-assets.heroku.com/install-ubuntu.sh | sh
+    - heroku --version
+    - export CI_PROJECT_NAMESPACE=`echo $CI_PROJECT_NAMESPACE | sed 's/[^a-zA-Z0-9-]//g'`;
+    - export CI_PROJECT_NAME=`echo $CI_PROJECT_NAME | sed 's/[^a-zA-Z0-9-]//g'`;
     # convert / to -, remove # character from docker tag name to make it a valid name
     - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
     - export DOCKER_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
-    - export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_STAGING/web
+    - export HEROKU_APP_NAME=${HEROKU_APP_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
+    - export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web
     - docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
   script:
-    - echo "login into Heroku Docker registry"
-    - docker login -u "$HEROKU_USER_NAME" -p "$HEROKU_API_KEY_STAGING" $HEROKU_REGISTRY
+    - docker login -u "$HEROKU_USER_NAME" -p "$HEROKU_API_KEY" $HEROKU_REGISTRY
+    - docker image pull $DOCKER_IMAGE
     - sh scripts/deploy_heroku.sh
   environment: staging
   only:
@@ -116,15 +125,24 @@ deploy-heroku-staging:
   when: on_success
 
 deploy-heroku-prod:
+  image: teracy/ubuntu:14.04-dind
   stage: deploy
   before_script:
+    - docker version
+    - docker-compose version
+    - wget -qO- https://cli-assets.heroku.com/install-ubuntu.sh | sh
+    - heroku --version
+    - export CI_PROJECT_NAMESPACE=`echo $CI_PROJECT_NAMESPACE | sed 's/[^a-zA-Z0-9-]//g'`;
+    - export CI_PROJECT_NAME=`echo $CI_PROJECT_NAME | sed 's/[^a-zA-Z0-9-]//g'`;
     # convert / to -, remove # character from docker tag name to make it a valid name
     - export IMG_TAG=`if [ "$CI_BUILD_REF_NAME" == "master" ]; then echo "latest"; else echo $CI_BUILD_REF_NAME | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
     - export DOCKER_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
-    - export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME_PROD/web
+    - export HEROKU_APP_NAME=${HEROKU_APP_NAME_PROD:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
+    - export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web
     - docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
   script:
-    - docker login -u "$HEROKU_USER_NAME" -p "$HEROKU_API_KEY_PROD" $HEROKU_REGISTRY
+    - docker login -u "$HEROKU_USER_NAME" -p "$HEROKU_API_KEY" $HEROKU_REGISTRY
+    - docker image pull $DOCKER_IMAGE
     - sh scripts/deploy_heroku.sh
   environment: prod
   only:

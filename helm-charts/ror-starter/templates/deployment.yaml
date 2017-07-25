@@ -26,6 +26,11 @@ spec:
           # see: https://github.com/kubernetes/kubernetes/issues/33664#issuecomment-292895327
           - name: LAST_DEPLOYED
             value: {{ .Values.image.lastDeployed | quote }}
+          - name: SECRET_KEY_BASE
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "fullname" . }}
+                key: secret-key-base
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:

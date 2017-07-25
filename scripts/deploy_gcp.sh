@@ -18,3 +18,8 @@ echo "helm upgrade $HELM_RELEASE_NAME --install $HELM_CHART"
 
 helm upgrade $HELM_RELEASE_NAME --install $HELM_CHART \
   --set image.repository=$HELM_IMAGE_REPOSITORY,image.tag=$HELM_IMAGE_TAG,image.pullPolicy=$HELM_IMAGE_PULL_POLICY,image.lastDeployed=$HELM_IMAGE_LAST_DEPLOYED
+
+
+helm upgrade $HELM_RELEASE_NAME --install $HELM_CHART \
+  --set image.repository=$HELM_IMAGE_REPOSITORY,image.tag=$HELM_IMAGE_TAG,image.pullPolicy=$HELM_IMAGE_PULL_POLICY,image.lastDeployed=$HELM_IMAGE_LAST_DEPLOYED \
+  --set app.secretKeyBase=$SECRET_KEY_BASE

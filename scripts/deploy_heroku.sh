@@ -26,7 +26,9 @@ else
   echo "$HEROKU_APP_NAME app found, updating...";
 fi
 
-heroku config:set SECRET_KEY_BASE=$SECRET_KEY_BASE -a $HEROKU_APP_NAME &> /dev/null # hide secret output
-
 docker tag $DOCKER_IMAGE $HEROKU_IMAGE
 docker push $HEROKU_IMAGE
+
+# TODO(hoatle): hide the secret output on gitlab-ci console
+
+heroku config:set SECRET_KEY_BASE=$SECRET_KEY_BASE -a $HEROKU_APP_NAME &> /dev/null # hide secret output

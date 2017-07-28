@@ -77,6 +77,7 @@ after_success:
     export HEROKU_EMAIL=$HEROKU_EMAIL_STAGING;
     export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
     export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
+    export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_STAGING;
     export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING;
   fi
 - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
@@ -97,6 +98,7 @@ after_success:
     export HEROKU_EMAIL=$HEROKU_EMAIL_PROD;
     export HEROKU_API_KEY=$HEROKU_API_KEY_PROD;
     export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
+    export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_PROD;
     export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD;
   fi
 - if ([[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]) && [[ -f /tmp/gcp_key_file.json ]]; then

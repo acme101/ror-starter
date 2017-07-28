@@ -53,6 +53,8 @@ deploy-gcp-staging:
     - export HELM_IMAGE_PULL_POLICY=Always
     - export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     #- docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+    - export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_STAGING
+    - export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING
     - echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json
   script:
     - sh scripts/setup_gcp.sh
@@ -85,6 +87,8 @@ deploy-gcp-prod:
     - export HELM_IMAGE_PULL_POLICY=Always
     - export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     #- docker login -u "gitlab-ci-token" -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+    - export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_PROD
+    - export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD
     - echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json
   script:
     - sh scripts/setup_gcp.sh

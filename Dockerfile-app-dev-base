@@ -1,0 +1,15 @@
+FROM ruby:2.4.1
+
+LABEL authors="hoatle <hoatle@teracy.com>"
+
+RUN mkdir -p /opt/app
+
+ENV APP=/opt/app
+
+WORKDIR $APP
+
+RUN apt-get update -qq && apt-get install -y build-essential libpq-dev nodejs
+
+ADD Gemfile Gemfile.lock $APP/
+
+RUN bundle install

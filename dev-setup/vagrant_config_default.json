@@ -1,0 +1,26 @@
+{
+  "provisioners": [{
+    "_id": "0",
+    "_ua_cookbooks_path": [
+      "workspace/ror-starter/dev-setup/chef/main-cookbooks"
+    ],
+    "_ua_run_list": [
+      "ror-starter"
+    ],
+    "json": {
+      "acme": {
+        "ror-starter": {
+          "project_guest_path": "/home/vagrant/workspace/ror-starter"
+        }
+      }
+    }
+  }],
+  "plugins": [{
+    "_id": "2",
+    "options": {
+      "_ua_aliases": [
+        "dev.ror.acme.dev", "review.ror.acme.dev", "ror.acme.dev"
+      ]
+    }
+  }]
+}

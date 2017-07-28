@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+
+  app-dev:
+    image: ${APP_DEV_IMAGE:-acme101/ror-starter:base-develop}
+    working_dir: /opt/app
+    command: sh run-dev.sh
+    environment:
+      RAILS_ENV: development
+      PORT: 3000
+      VIRTUAL_HOST: ${APP_DEV_VIRTUAL_HOST:-dev.ror.acme.dev, ~^dev\.ror\..*\.xip\.io}
+      HTTPS_METHOD: noredirect # support both http and https
+    env_file:
+      - .env-common
+      - .env-dev
+    depends_on:
+      - db-dev
+    links:
+      - db-dev:db
+    volumes:
+      - .:/opt/app
+    ports:
+      - 3000
+    restart: unless-stopped
+    # to get this work with https://github.com/jwilder/nginx-proxy
+    # related: https://github.com/jwilder/nginx-proxy/issues/305
+    network_mode: bridge
+
+  # app-dev base image to be used for faster development, don't have to build lots of layers everytime
+  app-dev-base:
+    build:
+      context: .
+      dockerfile: Dockerfile-app-dev-base
+    image: ${APP_DEV_BASE_IMAGE:-acme101/ror-starter:base-develop}
+
+  db-dev:
+    image: ${DB_DEV_IMAGE:-postgres:9.6.3-alpine}
+    restart: unless-stopped
+    network_mode: bridge

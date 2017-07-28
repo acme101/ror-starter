@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CI_BUILD_ID: ${CI_BUILD_ID}
+        CI_BUILD_REF: ${CI_BUILD_REF}
+        CI_BUILD_TIME: ${CI_BUILD_TIME}
+        CI_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}
+        RAILS_ENV: production
+    image: ${APP_PROD_IMAGE:-acme101/ror-starter:develop}
+    depends_on:
+      - db-dev
+    links:
+      - db-dev:db
+    environment:
+      PORT: 8080
+      VIRTUAL_HOST: ${APP_PROD_VIRTUAL_HOST:-ror.acme.dev, ~^ror\..*\.xip\.io}
+      HTTPS_METHOD: noredirect # support both http and https
+    env_file:
+      - .env-common
+      - .env-prod
+    ports:
+      - 8080
+    network_mode: bridge

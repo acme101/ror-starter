@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+
+  app-review:
+    image: ${APP_REVIEW_IMAGE}
+    environment:
+      PORT: 8080
+      VIRTUAL_HOST: ${APP_REVIEW_VIRTUAL_HOST:-review.ror.acme.dev, ~^review\.ror\..*\.xip\.io}
+      HTTPS_METHOD: noredirect # support both http and https
+    env_file:
+      - .env-common
+      - .env-review
+    depends_on:
+      - db-review
+    links:
+      - db-review:db
+    restart: unless-stopped
+    network_mode: bridge
+
+  db-review:
+    image: ${DB_DEV_IMAGE:-postgres:9.6.3-alpine}
+    restart: unless-stopped
+    network_mode: bridge

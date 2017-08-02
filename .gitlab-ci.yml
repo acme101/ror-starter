@@ -34,6 +34,11 @@ build-verify:
     - docker push $APP_DEV_BASE_IMAGE
     - docker push $APP_PROD_IMAGE
 
+functional_test:
+  stage: test
+  script:
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e "RAILS_ENV=test" --rm app-prod bundle exec rspec
+
 deploy-gcp-staging:
   image: teracy/google-cloud-sdk
   stage: deploy

@@ -55,7 +55,9 @@ before_script:
 script:
 - docker-compose build --pull app-dev-base;
 - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
-- docker-compose run -e "RAILS_ENV=test" --rm app-dev bundle exec rspec;
+- docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e "RAILS_ENV=test" --rm app-prod bundle exec rake db:create;
+- docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e "RAILS_ENV=test" --rm app-prod bundle exec rake db:migrate;
+- docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e "RAILS_ENV=test" --rm app-prod bundle exec rspec;
 after_success:
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
 - docker push $APP_DEV_BASE_IMAGE

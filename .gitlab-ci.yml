@@ -31,17 +31,13 @@ build-verify:
     # build
     - docker-compose build --pull app-dev-base
     - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod
-    - docker push $APP_DEV_BASE_IMAGE
-    - docker push $APP_PROD_IMAGE
-
-rspec:
-  stage: test
-  script:
     - for i in $(seq 1 5); do
         docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e RAILS_ENV=test --rm app-prod bundle exec rake db:create && break || sleep 3;
       done
     - docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e RAILS_ENV=test --rm app-prod bundle exec rake db:migrate
     - docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e RAILS_ENV=test --rm app-prod bundle exec rspec
+    - docker push $APP_DEV_BASE_IMAGE
+    - docker push $APP_PROD_IMAGE
 
 deploy-gcp-staging:
   image: teracy/google-cloud-sdk

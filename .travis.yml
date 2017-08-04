@@ -54,6 +54,11 @@ before_script:
 - echo $APP_PROD_IMAGE
 script:
 - docker-compose build --pull app-dev-base;
+- for i in $(seq 1 5); do
+    docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rake db:create && break || sleep 3;
+  done
+- docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rake db:migrate;
+- docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rspec;
 - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
 after_success:
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD

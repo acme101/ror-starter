@@ -36,5 +36,13 @@ services:
 
   db-dev:
     image: ${DB_DEV_IMAGE:-postgres:9.6.3-alpine}
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secured!
+    volumes:
+      - db-dev:/var/lib/postgresql/data
     restart: unless-stopped
     network_mode: bridge
+
+volumes:
+  db-dev:

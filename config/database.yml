@@ -1,20 +1,24 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  host: db
-  username: postgres
-  password:
+  host: <%= ENV['DATABASE_HOST'] %>
+  username: <%= ENV['DATABASE_USERNAME'] %>
+  password: <%= ENV['DATABASE_PASSWORD'] %>
   pool: 5
-
-production:
-  <<: *default
-  database: hello_world_production
 
 development:
   <<: *default
-  database: hello_world_development
-
+  database: <%= ENV['DATABASE_DEVELOPMENT'] %>
 
 test:
   <<: *default
-  database: hello_world_test
+  database: <%= ENV['DATABASE_TEST'] %>
+
+production:
+  <<: *default
+  database: <%= ENV['DATABASE_PRODUCTION'] %>
+  host: <%= ENV['DATABASE_HOST_PRODUCTION'] %>
+  username: <%= ENV['DATABASE_USER_PRODUCTION'] %>
+  port: <%= ENV['DATABASE_PORT_PRODUCTION'] %>
+  password: <%= ENV['DATABASE_PASSWORD_PRODUCTION'] %>
+  url: <%= ENV['DATABASE_URI_PRODUCTION'] %>

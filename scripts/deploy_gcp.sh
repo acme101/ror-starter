@@ -24,4 +24,5 @@ helm upgrade $HELM_RELEASE_NAME --install $HELM_CHART \
   --set app.databaseProduction=$DATABASE \
   --set app.databaseUsername=$DATABASE_USERNAME \
   --set app.databasePort=$DATABASE_PORT \
-  --set app.databasePassword=$DATABASE_PASSWORD
+  --set app.databasePassword=$DATABASE_PASSWORD \
+  --set app.databaseUri=$DATABASE_URI

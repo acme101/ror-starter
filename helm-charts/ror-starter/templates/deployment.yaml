@@ -41,6 +41,8 @@ spec:
             value: {{ .Values.app.databasePort }}
           - name: DATABASE_PASSWORD
             value: {{ .Values.app.databasePassword }}
+          - name: DATABASE_URI
+            value: {{ .Values.app.databaseUri }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:

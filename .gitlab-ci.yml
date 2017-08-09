@@ -65,6 +65,7 @@ deploy-gcp-staging:
     - export DATABASE_USERNAME=$GCP_DATABASE_USERNAME_STAGING
     - export DATABASE_PORT=$GCP_DATABASE_PORT_STAGING
     - export DATABASE_PASSWORD=$GCP_DATABASE_PASSWORD_STAGING
+    - export DATABASE_URI=$GCP_DATABASE_URI_STAGING
     - echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json
   script:
     - sh scripts/setup_gcp.sh
@@ -104,6 +105,7 @@ deploy-gcp-prod:
     - export DATABASE_USERNAME=$GCP_DATABASE_USERNAME_PROD
     - export DATABASE_PORT=$GCP_DATABASE_PORT_PROD
     - export DATABASE_PASSWORD=$GCP_DATABASE_PASSWORD_PROD
+    - export DATABASE_URI=$GCP_DATABASE_URI_PROD
     - echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json
   script:
     - sh scripts/setup_gcp.sh

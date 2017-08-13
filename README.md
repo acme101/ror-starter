@@ -108,19 +108,23 @@ dev.ror.192.168.1.5.xip.io or ror.192.168.1.5.xip.io
 
 ## Remote Debugging
 
-We use RubyMine (IntelliJ) to run the Rails remote debugging in a Docker container.
-Firstly, starting remote debug session on the remote host:
+See the forwarded debug ports by:
 
 ```
-$ docker-compose run --rm -p 1234:1234 -p 3000:3000 app-dev bundle exec rdebug-ide --host 0.0.0.0 --port 1234 --dispatcher-port 26162 -- /opt/app/bin/rails s -b 0.0.0.0 -p 3000 -e development
+$ docker-compose ps app-dev
 ```
 
-You should see something like this:
+You could see something like this:
 
 ```
-Starting rorstarter_db-dev_1 ... done
-Fast Debugger (ruby-debug-ide 0.6.0, debase 0.2.1, file filtering is supported) listens on 0.0.0.0:1234
+        Name              Command      State                        Ports
+-----------------------------------------------------------------------------------------------
+rorstarter_app-dev_1   sh run-dev.sh   Up      0.0.0.0:32780->1234/tcp, 0.0.0.0:32779->3000/tcp
 ```
+
+=> use 32780 as the debug port.
+
+=> use acme.dev as the debug host.
 
 RubyMine configuration
 
@@ -129,7 +133,7 @@ Go to Run -> Edit Configurations...
 Add a new "Ruby remote debug". Fill in the fields with the following:
 
 - Remote host: acme.dev
-- Remote port: 1234
+- Remote port: 32780
 - Remote root folder: /opt/app
 - Local port: 26162
 - Local root folder: path to the folder of your project on your local machine

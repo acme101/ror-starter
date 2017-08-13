@@ -10,6 +10,7 @@ services:
       RAILS_ENV: development
       PORT: 3000
       VIRTUAL_HOST: ${APP_DEV_VIRTUAL_HOST:-dev.ror.acme.dev, ~^dev\.ror\..*\.xip\.io}
+      VIRTUAL_PORT: 3000
       HTTPS_METHOD: noredirect # support both http and https
     env_file:
       - .env-common
@@ -22,6 +23,7 @@ services:
       - .:/opt/app
     ports:
       - 3000
+      - 1234
     restart: unless-stopped
     # to get this work with https://github.com/jwilder/nginx-proxy
     # related: https://github.com/jwilder/nginx-proxy/issues/305

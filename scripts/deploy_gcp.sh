@@ -19,4 +19,10 @@ echo "helm upgrade $HELM_RELEASE_NAME --install $HELM_CHART"
 helm upgrade $HELM_RELEASE_NAME --install $HELM_CHART \
   --set replicaCount=$HELM_REPLICA_COUNT \
   --set image.repository=$HELM_IMAGE_REPOSITORY,image.tag=$HELM_IMAGE_TAG,image.pullPolicy=$HELM_IMAGE_PULL_POLICY,image.lastDeployed=$HELM_IMAGE_LAST_DEPLOYED \
-  --set app.secretKeyBase=$SECRET_KEY_BASE
+  --set app.secretKeyBase=$SECRET_KEY_BASE \
+  --set app.databaseHost=$DATABASE_HOST \
+  --set app.databaseProduction=$DATABASE \
+  --set app.databaseUsername=$DATABASE_USERNAME \
+  --set app.databasePort=$DATABASE_PORT \
+  --set app.databasePassword=$DATABASE_PASSWORD \
+  --set app.databaseUri=$DATABASE_URI

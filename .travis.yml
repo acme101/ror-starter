@@ -12,106 +12,154 @@ env:
     HEROKU_USER_NAME: _
     HEROKU_REGISTRY: registry.heroku.com
 
-before_install:
-  # install the latest docker and docker-compose versions
-  - sudo apt-get remove docker docker-engine
-  - sudo curl -sSL https://get.docker.com/ | sh
-  - sudo rm /usr/local/bin/docker-compose
-  # the latest docker-compose version
-  - export DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-  - docker version
-  - docker-compose version
-  # install google-cloud-sdk
-  # clean up existing gcloud pre-installed by travis-ci
-  - sudo rm -rf /usr/bin/git-credential-gcloud.sh /usr/bin/bq /usr/bin/gcloud /usr/bin/gsutil
-  # Make sure gcloud command is on our PATH
-  - export PATH=$PATH:${HOME}/google-cloud-sdk/bin
-  - export CLOUDSDK_CORE_DISABLE_PROMPTS=1
-  # If the SDK is not already cached, download it and unpack it
-  - if [ ! -d ${HOME}/google-cloud-sdk ]; then
-      curl https://sdk.cloud.google.com | bash;
-    fi
-  - gcloud version
-  - gcloud components install kubectl
-  # install helm
-  - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
-  - helm version --client
-  - wget -qO- https://cli-assets.heroku.com/install-ubuntu.sh | sh
-  - heroku --version
-before_script:
-- export CI_PROJECT_NAMESPACE=`echo $TRAVIS_REPO_SLUG | cut -d"/" -f1 | sed 's/[^a-zA-Z0-9-]//g'`;
-- export CI_PROJECT_NAME=`echo $TRAVIS_REPO_SLUG | cut -d"/" -f2 | sed 's/[^a-zA-Z0-9-]//g'`;
-- export DOCKER_USER=${DOCKER_USER:-$CI_PROJECT_NAMESPACE}
-- export DOCKER_REPO=${DOCKER_REPO:-$CI_PROJECT_NAME}
-- export CI_REGISTRY_IMAGE=$DOCKER_USER/$DOCKER_REPO
-- export IMG_TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
-- export APP_DEV_BASE_IMAGE=$CI_REGISTRY_IMAGE:base-$IMG_TAG
-- echo $APP_DEV_BASE_IMAGE
-- export APP_PROD_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
-- echo $APP_PROD_IMAGE
-script:
-- docker-compose build --pull app-dev-base;
-- for i in $(seq 1 5); do
-    docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rake db:create && break || sleep 3;
-  done
-- docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rake db:migrate;
-- docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rspec;
-- docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
-after_success:
-- docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
-- docker push $APP_DEV_BASE_IMAGE
-- docker push $APP_PROD_IMAGE
-- if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
-    export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING;
-    export GCP_ZONE=$GCP_ZONE_STAGING;
-    export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING;
-    export HELM_RELEASE_NAME=${HELM_RELEASE_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
-    export HELM_CHART=helm-charts/${HELM_CHART:-$CI_PROJECT_NAME};
-    echo $HELM_RELEASE_NAME;
-    export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
-    export HELM_IMAGE_TAG=$IMG_TAG;
-    export HELM_IMAGE_PULL_POLICY=Always;
-    export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
-    echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json;
-    export DOCKER_IMAGE=$APP_PROD_IMAGE;
-    export HEROKU_APP_NAME=${HEROKU_APP_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
-    echo $HEROKU_APP_NAME;
-    export HEROKU_EMAIL=$HEROKU_EMAIL_STAGING;
-    export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
-    export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
-    export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_STAGING;
-    export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING;
-  fi
-- if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-    export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD;
-    export GCP_ZONE=$GCP_ZONE_PROD;
-    export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD;
-    export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME;
-    echo $HELM_RELEASE_NAME;
-    export HELM_CHART=helm-charts/$CI_PROJECT_NAME;
-    export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
-    export HELM_IMAGE_TAG=$IMG_TAG;
-    export HELM_IMAGE_PULL_POLICY=Always;
-    export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
-    echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json;
-    export DOCKER_IMAGE=$APP_PROD_IMAGE;
-    export HEROKU_APP_NAME=${HEROKU_APP_NAME_PROD:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
-    echo $HEROKU_APP_NAME;
-    export HEROKU_EMAIL=$HEROKU_EMAIL_PROD;
-    export HEROKU_API_KEY=$HEROKU_API_KEY_PROD;
-    export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
-    export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_PROD;
-    export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD;
-  fi
-- if ([[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]) && [[ -f /tmp/gcp_key_file.json ]]; then
-    sh scripts/setup_gcp.sh;
-    sh scripts/deploy_gcp.sh;
-    rm -rf /tmp/gcp_key_file.json;
-  fi
-- if [[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]; then
-    docker login -u=$HEROKU_USER_NAME -p=$HEROKU_API_KEY $HEROKU_REGISTRY;
-    sh scripts/deploy_heroku.sh;
-  fi
+jobs:
+  include:
+    - stage: build-verify
+      before_install:
+      # install the latest docker and docker-compose versions
+      - sudo apt-get remove docker docker-engine
+      - sudo curl -sSL https://get.docker.com/ | sh
+      - sudo rm /usr/local/bin/docker-compose
+      # the latest docker-compose version
+      - export DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
+      - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+      - chmod +x docker-compose
+      - sudo mv docker-compose /usr/local/bin
+      - docker version
+      - docker-compose version
+      # install google-cloud-sdk
+      # clean up existing gcloud pre-installed by travis-ci
+      - sudo rm -rf /usr/bin/git-credential-gcloud.sh /usr/bin/bq /usr/bin/gcloud /usr/bin/gsutil
+      # Make sure gcloud command is on our PATH
+      - export PATH=$PATH:${HOME}/google-cloud-sdk/bin
+      - export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+      # If the SDK is not already cached, download it and unpack it
+      - if [ ! -d ${HOME}/google-cloud-sdk ]; then
+          curl https://sdk.cloud.google.com | bash;
+        fi
+      - gcloud version
+      - gcloud components install kubectl
+      # install helm
+      - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+      - helm version --client
+      - wget -qO- https://cli-assets.heroku.com/install-ubuntu.sh | sh
+      - heroku --version
+      before_script:
+      - export CI_PROJECT_NAMESPACE=`echo $TRAVIS_REPO_SLUG | cut -d"/" -f1 | sed 's/[^a-zA-Z0-9-]//g'`;
+      - export CI_PROJECT_NAME=`echo $TRAVIS_REPO_SLUG | cut -d"/" -f2 | sed 's/[^a-zA-Z0-9-]//g'`;
+      - export DOCKER_USER=${DOCKER_USER:-$CI_PROJECT_NAMESPACE}
+      - export DOCKER_REPO=${DOCKER_REPO:-$CI_PROJECT_NAME}
+      - export CI_REGISTRY_IMAGE=$DOCKER_USER/$DOCKER_REPO
+      - export IMG_TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH | sed -e 's/[\/]/-/g' | sed -e 's/[\#]//g'; fi`
+      - export APP_DEV_BASE_IMAGE=$CI_REGISTRY_IMAGE:base-$IMG_TAG
+      - echo $APP_DEV_BASE_IMAGE
+      - export APP_PROD_IMAGE=$CI_REGISTRY_IMAGE:$IMG_TAG
+      - echo $APP_PROD_IMAGE
+      script:
+      - docker-compose build --pull app-dev-base;
+      - for i in $(seq 1 5); do
+          docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rake db:create && break || sleep 3;
+        done
+      - docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rake db:migrate;
+      - docker-compose run -e RAILS_ENV=test --rm app-dev bundle exec rspec;
+      - docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --pull app-prod;
+      after_success:
+      - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
+      - docker push $APP_DEV_BASE_IMAGE
+      - docker push $APP_PROD_IMAGE
+
+    - stage: deploy-gcp-staging
+      script:
+      - if [[ "$TRAVIS_BRANCH" == "develop" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
+          export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING;
+          export GCP_ZONE=$GCP_ZONE_STAGING;
+          export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING;
+          export HELM_RELEASE_NAME=${HELM_RELEASE_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
+          export HELM_CHART=helm-charts/${HELM_CHART:-$CI_PROJECT_NAME};
+          echo $HELM_RELEASE_NAME;
+          export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
+          export HELM_IMAGE_TAG=$IMG_TAG;
+          export HELM_IMAGE_PULL_POLICY=Always;
+          export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
+          echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json;
+          export DOCKER_IMAGE=$APP_PROD_IMAGE;
+          export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_STAGING;
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING_GCP;
+          export DATABASE_HOST=$DATABASE_HOST_STAGING_GCP;
+          export DATABASE_PRODUCTION=$DATABASE_STAGING_GCP;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_STAGING_GCP;
+          export DATABASE_PORT=$DATABASE_PORT_STAGING_GCP;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_STAGING_GCP;
+          export DATABASE_URI=$DATABASE_URI_STAGING_GCP;
+          sh scripts/setup_gcp.sh;
+          sh scripts/deploy_gcp.sh;
+          rm -rf /tmp/gcp_key_file.json;
+        fi
+
+    - stage: deploy-gcp-prod
+      script:
+      - if [[ "$TRAVIS_BRANCH" == "master" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
+          export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD;
+          export GCP_ZONE=$GCP_ZONE_PROD;
+          export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD;
+          export HELM_RELEASE_NAME=$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME;
+          echo $HELM_RELEASE_NAME;
+          export HELM_CHART=helm-charts/$CI_PROJECT_NAME;
+          export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE;
+          export HELM_IMAGE_TAG=$IMG_TAG;
+          export HELM_IMAGE_PULL_POLICY=Always;
+          export HELM_IMAGE_LAST_DEPLOYED=$(date -u +"%Y-%m-%dT%H:%M:%SZ");
+          echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json;
+          export DOCKER_IMAGE=$APP_PROD_IMAGE;
+          export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_PROD;
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD_GCP;
+          export DATABASE_HOST=$DATABASE_HOST_PROD_GCP;
+          export DATABASE_PRODUCTION=$DATABASE_PROD_GCP;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_PROD_GCP;
+          export DATABASE_PORT=$DATABASE_PORT_PROD_GCP;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_PROD_GCP;
+          export DATABASE_URI=$DATABASE_URI_PROD_GCP;
+          sh scripts/setup_gcp.sh;
+          sh scripts/deploy_gcp.sh;
+          rm -rf /tmp/gcp_key_file.json;
+        fi
+
+    - stage: deploy-heroku-staging
+      script:
+      - if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
+          export DOCKER_IMAGE=$APP_PROD_IMAGE;
+          export HEROKU_APP_NAME=${HEROKU_APP_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
+          echo $HEROKU_APP_NAME;
+          export HEROKU_EMAIL=$HEROKU_EMAIL_STAGING;
+          export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
+          export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING_HEROKU;
+          export DATABASE_HOST=$DATABASE_HOST_STAGING_HEROKU;
+          export DATABASE_PRODUCTION=$DATABASE_STAGING_HEROKU;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_STAGING_HEROKU;
+          export DATABASE_PORT=$DATABASE_PORT_STAGING_HEROKU;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_STAGING_HEROKU;
+          export DATABASE_URI=$DATABASE_URI_STAGING_HEROKU;
+          docker login -u=$HEROKU_USER_NAME -p=$HEROKU_API_KEY $HEROKU_REGISTRY;
+          sh scripts/deploy_heroku.sh;
+        fi
+
+    - stage: deploy-heroku-prod
+      script:
+      - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+          export DOCKER_IMAGE=$APP_PROD_IMAGE;
+          export HEROKU_APP_NAME=${HEROKU_APP_NAME_PROD:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
+          echo $HEROKU_APP_NAME;
+          export HEROKU_EMAIL=$HEROKU_EMAIL_PROD;
+          export HEROKU_API_KEY=$HEROKU_API_KEY_PROD;
+          export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD_HEROKU;
+          export DATABASE_HOST=$DATABASE_HOST_PROD_HEROKU;
+          export DATABASE_PRODUCTION=$DATABASE_PROD_HEROKU;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_PROD_HEROKU;
+          export DATABASE_PORT=$DATABASE_PORT_PROD_HEROKU;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_PROD_HEROKU;
+          export DATABASE_URI=$DATABASE_URI_PROD_HEROKU;
+          docker login -u=$HEROKU_USER_NAME -p=$HEROKU_API_KEY $HEROKU_REGISTRY;
+          sh scripts/deploy_heroku.sh;
+        fi

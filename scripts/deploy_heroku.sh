@@ -32,4 +32,14 @@ docker push $HEROKU_IMAGE
 # TODO(hoatle): hide the secret output on gitlab-ci console
 echo "updating heroku configs";
 
-heroku config:set SECRET_KEY_BASE=$SECRET_KEY_BASE -a $HEROKU_APP_NAME &> /dev/null # hide secret output
+heroku config:set SECRET_KEY_BASE=$SECRET_KEY_BASE \
+  DATABASE_HOST=$DATABASE_HOST \
+  DATABASE_PRODUCTION=$DATABASE \
+  DATABASE_USERNAME=$DATABASE_USERNAME \
+  DATABASE_PORT=$DATABASE_PORT \
+  DATABASE_PASSWORD=$DATABASE_PASSWORD \
+  DATABASE_URI=$DATABASE_URI \
+  -a $HEROKU_APP_NAME &> /dev/null # hide secret output
+
+echo "migrating heroku addon database";
+heroku run rake db:migrate -a $HEROKU_APP_NAME &> /dev/null # hide secret environment variables from console

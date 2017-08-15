@@ -31,6 +31,18 @@ spec:
               secretKeyRef:
                 name: {{ template "fullname" . }}
                 key: secret-key-base
+          - name: DATABASE_HOST
+            value: {{ .Values.app.databaseHost }}
+          - name: DATABASE_PRODUCTION
+            value: {{ .Values.app.databaseProduction }}
+          - name: DATABASE_USERNAME
+            value: {{ .Values.app.databaseUsername }}
+          - name: DATABASE_PORT
+            value: {{ .Values.app.databasePort }}
+          - name: DATABASE_PASSWORD
+            value: {{ .Values.app.databasePassword }}
+          - name: DATABASE_URI
+            value: {{ .Values.app.databaseUri }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:

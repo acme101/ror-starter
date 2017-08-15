@@ -68,9 +68,9 @@ jobs:
       - docker push $APP_DEV_BASE_IMAGE
       - docker push $APP_PROD_IMAGE
 
-    - stage: deploy-gcp
+    - stage: deploy-gcp-staging
       script:
-      - if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
+      - if [[ "$TRAVIS_BRANCH" == "develop" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
           export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING;
           export GCP_ZONE=$GCP_ZONE_STAGING;
           export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING;
@@ -84,15 +84,21 @@ jobs:
           echo $GCP_KEY_FILE_STAGING | base64 --decode > /tmp/gcp_key_file.json;
           export DOCKER_IMAGE=$APP_PROD_IMAGE;
           export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_STAGING;
-          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING;
-          export DATABASE_HOST=$GCP_DATABASE_HOST_STAGING;
-          export DATABASE_PRODUCTION=$GCP_DATABASE_STAGING;
-          export DATABASE_USERNAME=$GCP_DATABASE_USERNAME_STAGING;
-          export DATABASE_PORT=$GCP_DATABASE_PORT_STAGING;
-          export DATABASE_PASSWORD=$GCP_DATABASE_PASSWORD_STAGING;
-          export DATABASE_URI=$GCP_DATABASE_URI_STAGING;
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING_GCP;
+          export DATABASE_HOST=$DATABASE_HOST_STAGING_GCP;
+          export DATABASE_PRODUCTION=$DATABASE_STAGING_GCP;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_STAGING_GCP;
+          export DATABASE_PORT=$DATABASE_PORT_STAGING_GCP;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_STAGING_GCP;
+          export DATABASE_URI=$DATABASE_URI_STAGING_GCP;
+          sh scripts/setup_gcp.sh;
+          sh scripts/deploy_gcp.sh;
+          rm -rf /tmp/gcp_key_file.json;
         fi
-      - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+
+    - stage: deploy-gcp-prod
+      script:
+      - if [[ "$TRAVIS_BRANCH" == "master" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
           export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD;
           export GCP_ZONE=$GCP_ZONE_PROD;
           export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD;
@@ -106,21 +112,19 @@ jobs:
           echo $GCP_KEY_FILE_PROD | base64 --decode > /tmp/gcp_key_file.json;
           export DOCKER_IMAGE=$APP_PROD_IMAGE;
           export HELM_REPLICA_COUNT=$HELM_REPLICA_COUNT_PROD;
-          export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD;
-          export DATABASE_HOST=$GCP_DATABASE_HOST_PROD;
-          export DATABASE_PRODUCTION=$GCP_DATABASE_PROD;
-          export DATABASE_USERNAME=$GCP_DATABASE_USERNAME_PROD;
-          export DATABASE_PORT=$GCP_DATABASE_PORT_PROD;
-          export DATABASE_PASSWORD=$GCP_DATABASE_PASSWORD_PROD;
-          export DATABASE_URI=$GCP_DATABASE_URI_PROD;
-        fi
-      - if ([[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]) && [[ -f /tmp/gcp_key_file.json ]]; then
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD_GCP;
+          export DATABASE_HOST=$DATABASE_HOST_PROD_GCP;
+          export DATABASE_PRODUCTION=$DATABASE_PROD_GCP;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_PROD_GCP;
+          export DATABASE_PORT=$DATABASE_PORT_PROD_GCP;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_PROD_GCP;
+          export DATABASE_URI=$DATABASE_URI_PROD_GCP;
           sh scripts/setup_gcp.sh;
           sh scripts/deploy_gcp.sh;
           rm -rf /tmp/gcp_key_file.json;
         fi
 
-    - stage: deploy-heroku
+    - stage: deploy-heroku-staging
       script:
       - if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
           export DOCKER_IMAGE=$APP_PROD_IMAGE;
@@ -129,14 +133,19 @@ jobs:
           export HEROKU_EMAIL=$HEROKU_EMAIL_STAGING;
           export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
           export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
-          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING;
-          export DATABASE_HOST=$HEROKU_DATABASE_HOST_STAGING;
-          export DATABASE_PRODUCTION=$HEROKU_DATABASE_STAGING;
-          export DATABASE_USERNAME=$HEROKU_DATABASE_USERNAME_STAGING;
-          export DATABASE_PORT=$HEROKU_DATABASE_PORT_STAGING;
-          export DATABASE_PASSWORD=$HEROKU_DATABASE_PASSWORD_STAGING;
-          export DATABASE_URI=$HEROKU_DATABASE_URI_STAGING;
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING_HEROKU;
+          export DATABASE_HOST=$DATABASE_HOST_STAGING_HEROKU;
+          export DATABASE_PRODUCTION=$DATABASE_STAGING_HEROKU;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_STAGING_HEROKU;
+          export DATABASE_PORT=$DATABASE_PORT_STAGING_HEROKU;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_STAGING_HEROKU;
+          export DATABASE_URI=$DATABASE_URI_STAGING_HEROKU;
+          docker login -u=$HEROKU_USER_NAME -p=$HEROKU_API_KEY $HEROKU_REGISTRY;
+          sh scripts/deploy_heroku.sh;
         fi
+
+    - stage: deploy-heroku-prod
+      script:
       - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
           export DOCKER_IMAGE=$APP_PROD_IMAGE;
           export HEROKU_APP_NAME=${HEROKU_APP_NAME_PROD:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
@@ -144,15 +153,13 @@ jobs:
           export HEROKU_EMAIL=$HEROKU_EMAIL_PROD;
           export HEROKU_API_KEY=$HEROKU_API_KEY_PROD;
           export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
-          export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD;
-          export DATABASE_HOST=$HEROKU_DATABASE_HOST_PROD;
-          export DATABASE_PRODUCTION=$HEROKU_DATABASE_PROD;
-          export DATABASE_USERNAME=$HEROKU_DATABASE_USERNAME_PROD;
-          export DATABASE_PORT=$HEROKU_DATABASE_PORT_PROD;
-          export DATABASE_PASSWORD=$HEROKU_DATABASE_PASSWORD_PROD;
-          export DATABASE_URI=$HEROKU_DATABASE_URI_PROD;
-        fi
-      - if [[ "$TRAVIS_BRANCH" == "master" ]] || [[ "$TRAVIS_BRANCH" == "develop" ]]; then
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_PROD_HEROKU;
+          export DATABASE_HOST=$DATABASE_HOST_PROD_HEROKU;
+          export DATABASE_PRODUCTION=$DATABASE_PROD_HEROKU;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_PROD_HEROKU;
+          export DATABASE_PORT=$DATABASE_PORT_PROD_HEROKU;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_PROD_HEROKU;
+          export DATABASE_URI=$DATABASE_URI_PROD_HEROKU;
           docker login -u=$HEROKU_USER_NAME -p=$HEROKU_API_KEY $HEROKU_REGISTRY;
           sh scripts/deploy_heroku.sh;
         fi

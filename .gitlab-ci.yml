@@ -51,7 +51,7 @@ deploy-gcp-staging:
     - export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING
     - export GCP_ZONE=$GCP_ZONE_STAGING
     - export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_STAGING
-    - export HELM_RELEASE_NAME=${HELM_RELEASE_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME}
+    - export HELM_RELEASE_NAME=${HELM_RELEASE_NAME_STAGING:-`IFS='/' read -a array <<< $IMG_TAG; IFS='-' read -a array <<< ${array[-1]}; normalized_name=${array[0]}; if [ "${normalized_name:0:1}" == "#" ]; then normalized_name=${normalized_name:1:1}; fi; for i in ${array[@]:1}; do normalized_name=$normalized_name-${i:0:1}; done; echo $normalized_name`-${CI_PROJECT_NAMESPACE:0:5}-`IFS='-' read -a array <<< $CI_PROJECT_NAME; normalized_name=${array[0]}; for i in ${array[@]:1}; do normalized_name=$normalized_name-${i:0:1}; done; echo $normalized_name`}
     - export HELM_CHART=helm-charts/${HELM_CHART:-$CI_PROJECT_NAME}
     - export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE
     - export HELM_IMAGE_TAG=$IMG_TAG
@@ -91,7 +91,7 @@ deploy-gcp-prod:
     - export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD
     - export GCP_ZONE=$GCP_ZONE_PROD
     - export GCP_CLUSTER_NAME=$GCP_CLUSTER_NAME_PROD
-    - export HELM_RELEASE_NAME=${HELM_RELEASE_NAME_PROD:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME}
+    - export HELM_RELEASE_NAME=${HELM_RELEASE_NAME_PROD:-`IFS='/' read -a array <<< $IMG_TAG; IFS='-' read -a array <<< ${array[-1]}; normalized_name=${array[0]}; if [ "${normalized_name:0:1}" == "#" ]; then normalized_name=${normalized_name:1:1}; fi; for i in ${array[@]:1}; do normalized_name=$normalized_name-${i:0:1}; done; echo $normalized_name`-${CI_PROJECT_NAMESPACE:0:5}-`IFS='-' read -a array <<< $CI_PROJECT_NAME; normalized_name=${array[0]}; for i in ${array[@]:1}; do normalized_name=$normalized_name-${i:0:1}; done; echo $normalized_name`}
     - export HELM_CHART=helm-charts/${HELM_CHART:-$CI_PROJECT_NAME}
     - export HELM_IMAGE_REPOSITORY=$CI_REGISTRY_IMAGE
     - export HELM_IMAGE_TAG=$IMG_TAG

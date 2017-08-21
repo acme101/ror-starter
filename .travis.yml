@@ -68,7 +68,7 @@ jobs:
       - docker push $APP_DEV_BASE_IMAGE
       - docker push $APP_PROD_IMAGE
 
-    - stage: deploy-staging
+    - stage: deploy
       script:
       - if [[ "$TRAVIS_BRANCH" == "develop" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
           export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING;
@@ -115,8 +115,7 @@ jobs:
           sh scripts/deploy_heroku.sh;
         fi
 
-    - stage: deploy-prod
-      script:
+    - script:
       - if [[ "$TRAVIS_BRANCH" == "master" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
           export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD;
           export GCP_ZONE=$GCP_ZONE_PROD;

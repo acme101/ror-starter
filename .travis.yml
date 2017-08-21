@@ -68,7 +68,7 @@ jobs:
       - docker push $APP_DEV_BASE_IMAGE
       - docker push $APP_PROD_IMAGE
 
-    - stage: deploy-gcp-staging
+    - stage: deploy
       script:
       - if [[ "$TRAVIS_BRANCH" == "develop" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
           export GCP_PROJECT_ID=$GCP_PROJECT_ID_STAGING;
@@ -96,8 +96,26 @@ jobs:
           rm -rf /tmp/gcp_key_file.json;
         fi
 
-    - stage: deploy-gcp-prod
-      script:
+    - script:
+      - if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
+          export DOCKER_IMAGE=$APP_PROD_IMAGE;
+          export HEROKU_APP_NAME=${HEROKU_APP_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
+          echo $HEROKU_APP_NAME;
+          export HEROKU_EMAIL=$HEROKU_EMAIL_STAGING;
+          export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
+          export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
+          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING_HEROKU;
+          export DATABASE_HOST=$DATABASE_HOST_STAGING_HEROKU;
+          export DATABASE_PRODUCTION=$DATABASE_STAGING_HEROKU;
+          export DATABASE_USERNAME=$DATABASE_USERNAME_STAGING_HEROKU;
+          export DATABASE_PORT=$DATABASE_PORT_STAGING_HEROKU;
+          export DATABASE_PASSWORD=$DATABASE_PASSWORD_STAGING_HEROKU;
+          export DATABASE_URI=$DATABASE_URI_STAGING_HEROKU;
+          docker login -u=$HEROKU_USER_NAME -p=$HEROKU_API_KEY $HEROKU_REGISTRY;
+          sh scripts/deploy_heroku.sh;
+        fi
+
+    - script:
       - if [[ "$TRAVIS_BRANCH" == "master" ]] && [[ -f /tmp/gcp_key_file.json ]]; then
           export GCP_PROJECT_ID=$GCP_PROJECT_ID_PROD;
           export GCP_ZONE=$GCP_ZONE_PROD;
@@ -124,28 +142,7 @@ jobs:
           rm -rf /tmp/gcp_key_file.json;
         fi
 
-    - stage: deploy-heroku-staging
-      script:
-      - if [[ "$TRAVIS_BRANCH" == "develop" ]]; then
-          export DOCKER_IMAGE=$APP_PROD_IMAGE;
-          export HEROKU_APP_NAME=${HEROKU_APP_NAME_STAGING:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};
-          echo $HEROKU_APP_NAME;
-          export HEROKU_EMAIL=$HEROKU_EMAIL_STAGING;
-          export HEROKU_API_KEY=$HEROKU_API_KEY_STAGING;
-          export HEROKU_IMAGE=$HEROKU_REGISTRY/$HEROKU_APP_NAME/web;
-          export SECRET_KEY_BASE=$SECRET_KEY_BASE_STAGING_HEROKU;
-          export DATABASE_HOST=$DATABASE_HOST_STAGING_HEROKU;
-          export DATABASE_PRODUCTION=$DATABASE_STAGING_HEROKU;
-          export DATABASE_USERNAME=$DATABASE_USERNAME_STAGING_HEROKU;
-          export DATABASE_PORT=$DATABASE_PORT_STAGING_HEROKU;
-          export DATABASE_PASSWORD=$DATABASE_PASSWORD_STAGING_HEROKU;
-          export DATABASE_URI=$DATABASE_URI_STAGING_HEROKU;
-          docker login -u=$HEROKU_USER_NAME -p=$HEROKU_API_KEY $HEROKU_REGISTRY;
-          sh scripts/deploy_heroku.sh;
-        fi
-
-    - stage: deploy-heroku-prod
-      script:
+    - script:
       - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
           export DOCKER_IMAGE=$APP_PROD_IMAGE;
           export HEROKU_APP_NAME=${HEROKU_APP_NAME_PROD:-$IMG_TAG-$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME};

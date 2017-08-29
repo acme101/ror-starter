@@ -2,6 +2,20 @@ version: '3'
 
 services:
 
+  ngrok-prod:
+    image: ${NGROK_PROD_IMAGE:-wernight/ngrok}
+    command: ngrok http -host-header=ror.acme.dev nginx-proxy:80
+    environment:
+      - VIRTUAL_HOST=ngrok-prod.ror.acme.dev
+      - HTTPS_METHOD=noredirect
+    ports:
+      - 4040
+    depends_on:
+      - app-prod
+    external_links:
+      - nginx-proxy
+    network_mode: bridge
+
   app-prod:
     build:
       context: .

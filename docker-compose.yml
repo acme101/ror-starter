@@ -2,6 +2,20 @@ version: '3'
 
 services:
 
+  ngrok-dev:
+    image: ${NGROK_DEV_IMAGE:-wernight/ngrok}
+    command: ngrok http -host-header=dev.ror.acme.dev nginx-proxy:80
+    environment:
+      - VIRTUAL_HOST=ngrok-dev.ror.acme.dev
+      - HTTPS_METHOD=noredirect
+    ports:
+      - 4040
+    depends_on:
+      - app-dev
+    external_links:
+      - nginx-proxy
+    network_mode: bridge
+
   app-dev:
     image: ${APP_DEV_IMAGE:-acme101/ror-starter:base-develop}
     working_dir: /opt/app

@@ -19,7 +19,8 @@
     "_id": "2",
     "options": {
       "_ua_aliases": [
-        "dev.ror.acme.dev", "review.ror.acme.dev", "ror.acme.dev"
+        "dev.ror.acme.dev", "review.ror.acme.dev", "ror.acme.dev",
+        "ngrok-dev.ror.acme.dev", "ngrok-prod.ror.acme.dev", "ngrok-review.ror.acme.dev"
       ]
     }
   }]

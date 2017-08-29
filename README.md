@@ -106,6 +106,36 @@ for example:
 dev.ror.192.168.1.5.xip.io or ror.192.168.1.5.xip.io
 
 
+## Internet Access
+
+When you need to share your web app to the work.
+
+```
+$ docker-compose up -d ngrok-dev
+```
+
+After that, open http://ngrok-dev.ror.acme.dev to see the ngrok domain for internet access.
+
+This is free and the domain will be randomly created.
+
+This is applied the same for the local prod and local review modes.
+
+```
+$ docker-compose -f docker-compose.prod.yml up -d ngrok-prod
+```
+
+Then open http://ngrok-prod.ror.acme.dev
+
+```
+$ docker-compose -f docker-compose.review.yml up -d ngrok-review
+```
+
+Then open http://ngrok-review.ror.acme.dev
+
+
+//TODO(duc4nh): add support for permanent domain access when this service is up.
+
+
 ## Remote Debugging
 
 //TODO(duc4nh): https://github.com/acme101/ror-starter/issues/2

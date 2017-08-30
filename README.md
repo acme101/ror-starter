@@ -138,8 +138,41 @@ Then open http://ngrok-review.ror.acme.dev
 
 ## Remote Debugging
 
-//TODO(duc4nh): https://github.com/acme101/ror-starter/issues/2
+See the forwarded debug ports by:
 
+```
+$ docker-compose ps app-dev
+```
+
+You could see something like this:
+
+```
+        Name              Command      State                        Ports
+-----------------------------------------------------------------------------------------------
+rorstarter_app-dev_1   sh run-dev.sh   Up      0.0.0.0:32780->1234/tcp, 0.0.0.0:32779->3000/tcp
+```
+
+=> use 32780 as the debug port.
+
+=> use acme.dev as the debug host.
+
+RubyMine configuration
+
+Go to Run -> Edit Configurations...
+
+Add a new "Ruby remote debug". Fill in the fields with the following:
+
+- Remote host: acme.dev
+- Remote port: 32780
+- Remote root folder: /opt/app
+- Local port: 26162
+- Local root folder: path to the folder of your project on your local machine
+
+Click "OK" to save the new configuration.
+
+Run remote debugging in RubyMine: Go to the "Run" menu and select the new Debug configuration that you set up.
+
+Put a break point somewhere in your code and we can start debugging.
 
 ## Learn more
 
